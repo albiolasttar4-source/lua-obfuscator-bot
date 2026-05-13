@@ -6,9 +6,12 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-# Bot setup
+# Bot setup with proper intents
 intents = discord.Intents.default()
 intents.message_content = True
+intents.guilds = True
+intents.guild_messages = True
+
 bot = commands.Bot(command_prefix='/', intents=intents)
 
 # Initialize obfuscator
@@ -17,11 +20,18 @@ obfuscator = LuaObfuscator()
 @bot.event
 async def on_ready():
     print(f'{bot.user} has connected to Discord!')
+    print(f'Bot is ready to use!')
     try:
         synced = await bot.tree.sync()
         print(f"Synced {len(synced)} command(s)")
     except Exception as e:
-        print(e)
+        print(f"Failed to sync commands: {e}")
+
+@bot.event
+async def on_error(event, *args, **kwargs):
+    print(f'Error in {event}:', file=__import__('sys').stderr)
+    import traceback
+    traceback.print_exc()
 
 @bot.tree.command(name="obfuscate", description="Obfuscate Lua code with advanced techniques")
 async def obfuscate(interaction: discord.Interaction, code: str):
@@ -39,7 +49,7 @@ async def obfuscate(interaction: discord.Interaction, code: str):
         
         # Check if code is too long for Discord embed
         if len(obfuscated_code) > 4096:
-            # Split into chunks and create file
+            # Create file
             with open('obfuscated_code.lua', 'w') as f:
                 f.write(obfuscated_code)
             
@@ -61,6 +71,7 @@ async def obfuscate(interaction: discord.Interaction, code: str):
             await interaction.followup.send(embed=embed)
     
     except Exception as e:
+        print(f"Error in obfuscate command: {e}")
         embed = discord.Embed(
             title="❌ Error",
             description=f"Failed to obfuscate code: {str(e)}",
@@ -109,7 +120,13 @@ async def help_command(interaction: discord.Interaction):
 
 # Run the bot
 TOKEN = os.getenv('DISCORD_TOKEN')
-if TOKEN:
+if not TOKEN:
+    print("ERROR: DISCORD_TOKEN environment variable is not set!")
+    print("Please set DISCORD_TOKEN in your environment variables")
+    exit(1)
+
+try:
     bot.run(TOKEN)
-else:
-    print("Error: DISCORD_TOKEN not found in environment variables!")
+except Exception as e:
+    print(f"Failed to start bot: {e}")
+    exit(1)
