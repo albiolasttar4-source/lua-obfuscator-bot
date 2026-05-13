@@ -5,7 +5,7 @@ import base64
 from typing import Dict, List, Tuple
 
 class LuaObfuscator:
-    """Advanced Lua code obfuscator with multiple techniques"""
+    """Advanced Lua code obfuscator with multiple levels"""
     
     def __init__(self):
         self.var_map: Dict[str, str] = {}
@@ -98,26 +98,59 @@ class LuaObfuscator:
         
         return '\n'.join(obfuscated_lines)
     
-    def obfuscate(self, code: str) -> str:
-        """Apply all obfuscation techniques"""
+    def add_junk_code_heavy(self, code: str) -> str:
+        """Add heavy junk code for maximum obfuscation"""
+        lines = code.split('\n')
+        obfuscated_lines = []
+        
+        for i, line in enumerate(lines):
+            # Add multiple junk lines
+            for _ in range(random.randint(2, 5)):
+                junk = f"local _x{random.randint(10000, 99999)}=math.random({random.randint(1, 1000)})"
+                obfuscated_lines.append(junk)
+            
+            obfuscated_lines.append(line)
+            
+            # Add more junk after important lines
+            if any(keyword in line for keyword in ['print', 'return', 'function']):
+                for _ in range(random.randint(1, 3)):
+                    junk = f"local _y{random.randint(10000, 99999)}={random.randint(1, 100)}*{random.randint(1, 100)}"
+                    obfuscated_lines.append(junk)
+        
+        return '\n'.join(obfuscated_lines)
+    
+    def obfuscate(self, code: str, level: int = 1) -> str:
+        """
+        Apply obfuscation techniques based on level:
+        Level 1 (Normal): Basic obfuscation
+        Level 2 (Medium): Advanced obfuscation
+        Level 3 (Max): Maximum obfuscation
+        """
         # Reset maps for new code
         self.var_map = {}
         self.string_map = {}
         self.function_map = {}
         
-        # Step 1: Remove comments and whitespace
-        code = self.remove_comments_and_whitespace(code)
+        if level == 1:
+            # Level 1: Basic obfuscation
+            code = self.remove_comments_and_whitespace(code)
+            code = self.randomize_variable_names(code)
         
-        # Step 2: Encrypt strings
-        code = self.encrypt_strings(code)
+        elif level == 2:
+            # Level 2: Medium obfuscation
+            code = self.remove_comments_and_whitespace(code)
+            code = self.encrypt_strings(code)
+            code = self.randomize_variable_names(code)
         
-        # Step 3: Randomize variable names
-        code = self.randomize_variable_names(code)
+        elif level == 3:
+            # Level 3: Maximum obfuscation
+            code = self.remove_comments_and_whitespace(code)
+            code = self.encrypt_strings(code)
+            code = self.randomize_variable_names(code)
+            code = self.flatten_control_flow(code)
+            code = self.add_junk_code_heavy(code)
         
-        # Step 4: Flatten control flow
-        code = self.flatten_control_flow(code)
-        
-        # Step 5: Final compression (remove unnecessary spaces)
+        # Final compression (remove unnecessary spaces)
         code = ' '.join(code.split())
         
         return code
